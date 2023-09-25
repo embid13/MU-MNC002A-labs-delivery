@@ -7,10 +7,14 @@ from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
 
 class deliveryBase(BaseModel):
     id: int = Field(
-        description="Id de la delivery",
+        description="Identificador de la delivery",
         example=1
     )
     location: str = Field(
-        description="Ubicación de la delivery, para dónde es.",
-        example="Mondragón"
+        description="Ubicación de la delivery de un order, indica a dónde hay que entregar el pedido.",
+        example="Goiru Kalea, 2, 20500 Arrasate, Gipuzkoa"
+    )
+    status: str = Field(
+        description="Estado de la entrega.",
+        example="Iniciado, Finalizado."
     )

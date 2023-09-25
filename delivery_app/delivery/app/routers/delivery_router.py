@@ -9,18 +9,14 @@ from .router_utils import raise_and_log_error
 """Delivery espera a recibir delivery info:
     - ubicación a dónde enviar el delivery.
     - id del order
-    - """
-"""Ubicación del delivery se envía con un json (POST) """
-"""En el main se genera la base de datos, en el models las tablas, en crud toda la MUGRE funciones."""
-"""Instalar librería Request
-    - Request.GET o Request.POST y después la URL."""
+    - estado del order"""
+"""Ubicación del delivery se envía con un json (GET) """
+"""En el main se genera la base de datos, en el models las tablas, en crud toda la MUGRE (funciones)."""
 """Respond """
 
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-
 
 
 @router.get(

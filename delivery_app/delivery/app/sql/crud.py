@@ -8,5 +8,4 @@ from . import models
 
 logger = logging.getLogger(__name__)
 
-#TODO
-get_delivery_list
+

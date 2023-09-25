@@ -29,5 +29,4 @@ class Delivery(BaseModel):
     id = Column(Integer, primary_key=True)
     location = Column(String, nullable=False)
     status = Column(Boolean, nullable=False)
-    description = Column(String, nullable=True)
 

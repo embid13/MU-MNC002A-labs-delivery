@@ -1,0 +1,15 @@
+version: '3.1'
+services:
+  monolithicapp:
+    build: delivery_app
+    ports:
+      - '13000:80'
+    volumes:
+      - './delivery_app/delivery:/code'
+      - './db_volume:/volume'
+    environment:
+      PYTHONUNBUFFERED: 1
+      SQLALCHEMY_DATABASE_URL: ${SQLALCHEMY_SQLITE_DATABASE_URI}
+      LOG_CONFIG_FILENAME: ${LOG_CONFIG_FILENAME}
+    restart: on-failure
+

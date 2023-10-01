@@ -2,9 +2,12 @@
 """Main file to start FastAPI application."""
 import logging
 import os
+import asyncio
 from fastapi import FastAPI
 from app.routers import main_router
 from app.sql import models, database
+from app.routers.deliveryConsumerPrueba import AsyncConsumer
+
 
 # Configure logging ################################################################################
 logger = logging.getLogger(__name__)
@@ -19,23 +22,15 @@ Monolithic manufacturing order application.
 tag_metadata = [
 
     {
-        "name": "Machine",
+        "name": "Delivery",
         "description": "Endpoints related to machines",
-    },
-    {
-        "name": "Order",
-        "description": "Endpoints to **CREATE**, **READ**, **UPDATE** or **DELETE** orders.",
-    },
-    {
-        "name": "Piece",
-        "description": "Endpoints **READ** piece information.",
     },
 
 ]
 
 app = FastAPI(
     redoc_url=None,  # disable redoc documentation.
-    title="FastAPI - Monolithic app",
+    title="FastAPI - Microservices app",
     description=DESCRIPTION,
     version=APP_VERSION,
     servers=[
@@ -51,6 +46,9 @@ app = FastAPI(
 
 app.include_router(main_router.router)
 
+rabbitmq_consumer = AsyncConsumer('event_exchange', 'delivery',
+                                  AsyncConsumer.on_delivery_received)
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -60,8 +58,8 @@ async def startup_event():
         await conn.run_sync(models.Base.metadata.create_all)
 
     from app import dependencies
-    logger.info("Creating machine")
-    await dependencies.get_machine()
+    logger.info("Waiting for RabbitMQ")
+    asyncio.create_task(rabbitmq_consumer.start_consuming())
 
 # Main #############################################################################################
 # If application is run as script, execute uvicorn on port 8000

@@ -6,7 +6,7 @@ import asyncio
 from fastapi import FastAPI
 from app.routers import main_router
 from app.sql import models, database
-from app.routers.deliveryConsumerPrueba import AsyncConsumer
+from app.routers.delivery_consumer import AsyncConsumer
 
 
 # Configure logging ################################################################################

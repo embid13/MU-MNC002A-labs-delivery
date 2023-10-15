@@ -5,7 +5,6 @@ from app.sql import crud, schemas
 from .delivery_router_utils import raise_and_log_error
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from sqlalchemy.orm import Session
 from app.dependencies import get_db
 
 logger = logging.getLogger(__name__)
@@ -28,14 +27,17 @@ router = APIRouter()
 )
 async def get_single_delivery(
         delivery_id: int,
-        db: Session = Depends(get_db)
+        db: AsyncSession = Depends(get_db)
 ):
     """Retrieve single order by id"""
     logger.debug("GET '/delivery/%i' endpoint called.", delivery_id)
-    delivery = await crud.get_delivery_by_id(db, delivery_id)
-    if not delivery:
-        raise_and_log_error(logger, status.HTTP_404_NOT_FOUND, f"Delivery {delivery_id} not found")
-    return delivery
+    try:
+        delivery = await crud.get_delivery_by_id(db, delivery_id)
+        if not delivery:
+            raise_and_log_error(logger, status.HTTP_404_NOT_FOUND, f"Delivery {delivery_id} not found")
+        return delivery
+    except Exception as exc:  # @ToDo: To broad exception
+        raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error getting the delivery: {exc}")
 
 
 @router.get(
@@ -46,6 +48,8 @@ async def get_single_delivery(
 )
 async def view_deliveries(db: AsyncSession = Depends(get_db)):
     logger.debug("GET '/delivery' endpoint called.")
-    delivery_list = await crud.get_delivery_list(db)
-    return delivery_list
-
+    try:
+        delivery_list = await crud.get_delivery_list(db)
+        return delivery_list
+    except Exception as exc:
+        raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error getting the deliveries: {exc}")

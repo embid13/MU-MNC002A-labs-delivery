@@ -2,12 +2,22 @@ import json
 import asyncio
 import aio_pika
 import logging
+import jwt
 from app.sql.database import SessionLocal
 from app.sql import crud, schemas
 from .delivery_router_utils import raise_and_log_error
 from fastapi import status
 
+
 logger = logging.getLogger(__name__)
+
+"""
+    El cliente manda usuario y contraseña a AUTH, AUTH le responde con un JWT firmado. 
+    AUTH mandará el public key a todos los microservicios.
+    En cada solicitud, Delivery va a recibir un JWT, NUNCA UN REFRESH TOKEN.
+    Comprobar si está caducado o no, en caso de estar caducado HTTP 401 (No autorizado).
+    Comprobar si tiene los permisos necesarios en cada caso, si no los tiene HTTP 403 (Prohibido.)
+"""
 
 
 class AsyncConsumer:
@@ -31,11 +41,13 @@ class AsyncConsumer:
             queue = await channel.declare_queue("", exclusive=True)
             await queue.bind(exchange, routing_key=self.routing_key)
 
-            async for message in queue:
-                async with message.process():
-                    await self.handle_message(message.body)
+            async with queue.iterator() as queue_iterator:
+                async for message in queue_iterator:
+                    async with message.process():
+                        await self.callback_func(message.body, exchange)
 
-    """either if create delivery or update delivery received:"""
+    #TODO
+    @staticmethod
     async def on_delivery_received(ch, method, properties, body):
         logger.debug("on_delivery_received called")
         logger.debug("Getting database SessionLocal")
@@ -44,7 +56,9 @@ class AsyncConsumer:
         # Decode the JSON message
         content = json.loads(body.decode('utf-8'))
         delivery_schema = schemas.deliveryBase(delivery_id=content['delivery_id'], status=content['status'],
-                                               location=content['location'])
+                                               location=content['location'], token=content['token'])
+        #VALIDAR el token
+        #crud.validate_jwt_token(delivery_schema.)
         logger.debug("delivery_schema:")
         logger.debug(delivery_schema)
 

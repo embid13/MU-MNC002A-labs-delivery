@@ -1,16 +1,35 @@
 # -*- coding: utf-8 -*-
 """Functions that interact with the database."""
 import logging
+import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 from . import models
 from . import schemas
-from sqlalchemy.orm import Session
 from sqlalchemy.future import select
+from ..routers.delivery_router_utils import raise_and_log_error
+from fastapi import status
 
 logger = logging.getLogger(__name__)
 
 
-async def get_delivery_by_id(db: Session, delivery_id):
+#TODO
+def validate_jwt_token(token):
+    #RECOGER EL TOKEN DE UN BROKER
+    public_key = ''  # La misma clave pública que se utiliza para firmar el token
+    try:
+        payload = jwt.decode(token, public_key, algorithms=['RS256'])
+        return payload
+    except jwt.ExpiredSignatureError as exc:
+        # Token caducado
+        raise_and_log_error(logger, status.HTTP_401_UNAUTHORIZED, f"Error {exc}")
+        return None
+    except jwt.InvalidTokenError as exc:
+        # Token inválido
+        raise_and_log_error(logger, status.HTTP_403_FORBIDDEN, f"Error {exc}")
+        return None
+
+
+async def get_delivery_by_id(db: AsyncSession, delivery_id):
     """Retrieve any delivery by id."""
     if delivery_id is None:
         return None
@@ -40,8 +59,10 @@ async def update_delivery(db: AsyncSession, delivery):
         await add_new_delivery(db, delivery)
         logger.debug("delivery created")
     else:
-        """If already exists a delivery with that ID, update STATUS"""
+        """If already exists a delivery with that ID, update it"""
         db_delivery.status = delivery.status
+        db_delivery.delivery_id = delivery.delivery_id
+        db_delivery.location = delivery.location
         await db.commit()
         await db.refresh(db_delivery)
         logger.debug("delivery updated")
@@ -50,7 +71,7 @@ async def update_delivery(db: AsyncSession, delivery):
             status=db_delivery.status,
             location=db_delivery.location
         )
-    return delivery_base
+        return delivery_base
 
 
 async def get_delivery_list(db: AsyncSession):

@@ -37,19 +37,20 @@ class RSAKeys(object):
                 return payload["user_id"]
             else:
                 return None  # El campo "user_id" no está presente en el token
-        except jwt.ExpiredSignatureError:
-            return "Token expirado"
-        except jwt.InvalidTokenError:
-            return "Token no válido"
         except Exception as e:
             return f"Error desconocido: {str(e)}"
 
     @staticmethod
-    def verify_jwt(token):
+    def verify_jwt_and_get_id_from_token(token):
         try:
             payload = jwt.decode(token, RSAKeys.public_key, algorithms=os.environ["JWT_ALGORITHM"])
             if payload['exp'] < datetime.timestamp(datetime.utcnow()):
                 raise_and_log_error(logger, status.HTTP_403_FORBIDDEN, "JWT Token expired")
+            user_id = RSAKeys.get_id_from_token(token)
+            if user_id is None:
+                raise_and_log_error(logger, status.HTTP_401_UNAUTHORIZED, f"JWT verification failed: NO user_id.")
+            else:
+                return user_id
         except jwt.exceptions.ExpiredSignatureError as exc:
             raise_and_log_error(logger, status.HTTP_403_FORBIDDEN, f"JWT Token expired: {exc}")
         except jwt.exceptions.InvalidSignatureError as exc:

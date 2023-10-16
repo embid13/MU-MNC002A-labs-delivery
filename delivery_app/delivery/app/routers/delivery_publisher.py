@@ -1,24 +1,25 @@
 import asyncio
+import os
 import aio_pika
-from os import environ
+import ssl
 
-# Get the variables from environment.
-class Config:
-    RABBITMQ_IP = environ.get("RABBITMQ_IP")
-    RABBITMQ_USER = environ.get("RABBITMQ_USER")
-    RABBITMQ_PASS = environ.get("RABBITMQ_PASS")
 
-#TODO
-#RABBITMQ + SSL
 async def create_connection():
-    # Crear una conexión a RabbitMQ sin SSL
+    ssl_options = {
+        "certfile": "/ruta/al/certificado.crt",  # Ruta al certificado del servidor
+        "keyfile": "/ruta/a/la/clave/privada.key"  # Ruta a la clave privada del servidor
+    }
+    # Crear una conexión a RabbitMQ con SSL
     connection = await aio_pika.connect_robust(
-        host=Config.RABBITMQ_IP,
-        port=5672,  # El puerto predeterminado sin SSL es 5672
-        login=Config.RABBITMQ_USER,
-        password=Config.RABBITMQ_PASS
+        host=os.environ.get("RABBITMQ_IP"),
+        port=5671,  # El puerto para SSL suele ser 5671
+        login=os.environ.get("RABBITMQ_USER"),
+        password=os.environ.get("RABBITMQ_PASS"),
+        ssl=True,  # Especificamos que queremos una conexión SSL
+        ssl_options=ssl_options
     )
     return connection
+
 
 
 async def create_channel(connection):

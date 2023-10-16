@@ -16,35 +16,28 @@ from fastapi import status
 logger = logging.getLogger(__name__)
 
 
-#TODO
-def validate_jwt_token(token):
-    public_key = requests.get('https://{os.environ["RABBITMQ_IP"]}/public-key')  # La misma clave pública que se utiliza para firmar el token
-    try:
-        payload = jwt.decode(token, public_key, algorithms=['RS256'])
-        return payload
-    except jwt.ExpiredSignatureError as exc:
-        # Token caducado
-        raise_and_log_error(logger, status.HTTP_401_UNAUTHORIZED, f"Error {exc}")
-        return None
-    except jwt.InvalidTokenError as exc:
-        # Token inválido
-        raise_and_log_error(logger, status.HTTP_403_FORBIDDEN, f"Error {exc}")
-        return None
-
-
 async def deliver_delivery_by_id(db: AsyncSession, delivery_id):
     """Deliver a delivery by id"""
     if delivery_id is None:
         return None
 
 
-async def get_delivery_by_id(db: AsyncSession, delivery_id):
-    """Retrieve any delivery by id."""
-    if delivery_id is None:
+async def get_delivery_by_id(db: AsyncSession, delivery_id, user_id):
+    """Retrieve a delivery by id if the user has permission."""
+    if delivery_id is None or user_id is None:
         return None
-
     delivery = await db.get(models.Delivery, delivery_id)
-    return delivery
+    if delivery is not None:
+        # Verificar si el user_id coincide con el user_id asociado al delivery
+        if delivery.user_id == user_id:
+            return delivery
+        else:
+            # El user_id no tiene permiso para acceder a esta entrega
+            raise_and_log_error(logger, status.HTTP_403_FORBIDDEN, f"El user_id no tiene permiso para acceder a"
+                                                                   f" esta entrega")
+    else:
+        # La entrega no se encontró en la base de datos
+        raise_and_log_error(logger, status.HTTP_403_FORBIDDEN, f"La entrega no se encontró en la base de datos")
 
 
 async def add_new_delivery(db: AsyncSession, delivery):
@@ -90,7 +83,17 @@ async def get_list(db: AsyncSession, model):
     return item_list
 
 
-async def get_delivery_list(db: AsyncSession):
-    """Load all the orders from the database."""
-    return await get_list(db, models.Delivery)
-
+async def get_delivery_list(db: AsyncSession, user_id):
+    """Load all the orders from the database for a specific user."""
+    try:
+        # Filtra las entregas por el user_id
+        result = await db.execute(select(models.Delivery).filter(models.Delivery.user_id == user_id))
+        item_list = result.unique().scalars().all()
+        if not item_list:
+            raise_and_log_error(logger, status.HTTP_403_FORBIDDEN, f"No tienes ninguna delivery pendiente.")
+        else:
+            return item_list
+    except Exception as e:
+        # Puedes manejar la excepción de la forma que consideres adecuada
+        raise_and_log_error(logger, status.HTTP_403_FORBIDDEN, f"Error al conseguir la lista de deliveries.")
+        return []  # Devuelve una lista vacía en caso de error

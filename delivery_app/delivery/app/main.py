@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from app.routers import main_router
 from app.sql import models, database
 from app.routers.delivery_consumer import AsyncConsumer
-
+from routers.keys import RSAKeys
 
 # Configure logging ################################################################################
 logger = logging.getLogger(__name__)
@@ -48,6 +48,8 @@ app.include_router(main_router.router)
 
 rabbitmq_consumer = AsyncConsumer('event_exchange', 'delivery',
                                   AsyncConsumer.on_delivery_received)
+
+RSAKeys.get_public_key()
 
 
 @app.on_event("startup")

@@ -8,8 +8,8 @@ class Config:
     RABBITMQ_USER = environ.get("RABBITMQ_USER")
     RABBITMQ_PASS = environ.get("RABBITMQ_PASS")
 
-
-
+#TODO
+#RABBITMQ + SSL
 async def create_connection():
     # Crear una conexión a RabbitMQ sin SSL
     connection = await aio_pika.connect_robust(

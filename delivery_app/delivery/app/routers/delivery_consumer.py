@@ -2,9 +2,10 @@ import json
 import asyncio
 import aio_pika
 import logging
+import os
 import jwt
-from app.sql.database import SessionLocal
-from app.sql import crud, schemas
+from delivery_app.delivery.app.sql.database import SessionLocal
+from delivery_app.delivery.app.sql import crud, schemas
 from .delivery_router_utils import raise_and_log_error
 from fastapi import status
 
@@ -30,7 +31,10 @@ class AsyncConsumer:
         logger.info("Waiting for RabbitMQ")
         connection = await aio_pika.connect_robust(
             "amqp://guest:guest@192.168.17.46/",
-            port=5672,
+            port=5671,
+            ssl=True,
+            login=os.environ.get("RABBITMQ_USER"),
+            password=os.environ.get("RABBITMQ_PASS"),
             loop=asyncio.get_event_loop()
         )
 
@@ -46,17 +50,34 @@ class AsyncConsumer:
                     async with message.process():
                         await self.callback_func(message.body, exchange)
 
-    #TODO
     @staticmethod
-    async def on_delivery_received(ch, method, properties, body):
+    async def on_delivery_received(body):
         logger.debug("on_delivery_received called")
         logger.debug("Getting database SessionLocal")
         db = SessionLocal()
 
         # Decode the JSON message
         content = json.loads(body.decode('utf-8'))
-        delivery_schema = schemas.deliveryBase(delivery_id=content['delivery_id'], status=content['status'],
-                                               location=content['location'], token=content['token'])
+        delivery_schema = schemas.deliveryBase(delivery_id=content['order_id'], status=content['status'],
+                                               location=content['location'])
+        logger.debug("delivery_schema:")
+        logger.debug(delivery_schema)
+
+        try:
+            await crud.add_new_delivery(db, delivery_schema)
+        except Exception as exc:
+            raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error {exc}")
+        print("Successful operation.")
+
+    @staticmethod
+    async def on_delivery_ready(body):
+        logger.debug("on_delivery_ready called")
+        logger.debug("Getting database SessionLocal")
+        db = SessionLocal()
+
+        # Decode the JSON message
+        content = json.loads(body.decode('utf-8'))
+        delivery_schema = schemas.deliveryBase(delivery_id=content['order_id'], status=content['status'])
         logger.debug("delivery_schema:")
         logger.debug(delivery_schema)
 

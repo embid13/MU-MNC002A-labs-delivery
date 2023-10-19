@@ -1,25 +1,38 @@
 # -*- coding: utf-8 -*-
 """Functions that interact with the database."""
 import logging
-import jwt
-import requests
-import os
-from datetime import datetime
+import json
 from sqlalchemy.ext.asyncio import AsyncSession
 from . import models
-from . import schemas
 from sqlalchemy.future import select
 from ..routers.delivery_router_utils import raise_and_log_error
 from fastapi import status
-
+from delivery_app.delivery.app.routers.delivery_publisher import publish_msg
 
 logger = logging.getLogger(__name__)
 
 
-async def deliver_delivery_by_id(db: AsyncSession, delivery_id):
+async def deliver_delivery_by_id(db: AsyncSession, delivery_id, user_id):
     """Deliver a delivery by id"""
-    if delivery_id is None:
-        return None
+    content = {}
+    db_delivery = get_delivery_by_id(db, delivery_id, user_id)
+    """If there is no delivery created with that id"""
+    if db_delivery is None:
+        logger.debug("delivery does not exist.")
+    elif db_delivery.status == "READY":
+        # If already exists a delivery with that ID, update it
+        db_delivery.status = "DELIVERED"
+        await db.commit()
+        await db.refresh(db_delivery)
+        # Publish the new status
+        content['delivery_id'] = delivery_id
+        content['status'] = "DELIVERED"
+        logger.debug(content)
+        await publish_msg('event_exchange', 'delivery.delivered', json.dumps(content))
+        logger.debug("delivery delivered")
+    else:
+        logger.debug("delivery is not ready!")
+    return db_delivery
 
 
 async def get_delivery_by_id(db: AsyncSession, delivery_id, user_id):
@@ -53,34 +66,13 @@ async def add_new_delivery(db: AsyncSession, delivery):
     logger.debug("New delivery created")
     return delivery_base
 
-
-async def update_delivery(db: AsyncSession, delivery):
-    db_delivery = get_delivery_by_id(db, delivery.delivery_id)
-    """If there is no delivery created with that id"""
-    if db_delivery is None:
-        await add_new_delivery(db, delivery)
-        logger.debug("delivery created")
-    else:
-        """If already exists a delivery with that ID, update it"""
-        db_delivery.status = delivery.status
-        db_delivery.delivery_id = delivery.delivery_id
-        db_delivery.location = delivery.location
-        await db.commit()
-        await db.refresh(db_delivery)
-        logger.debug("delivery updated")
-        delivery_base = schemas.deliveryBase(
-            delivery_id=db_delivery.delivery_id,
-            status=db_delivery.status,
-            location=db_delivery.location
-        )
-        return delivery_base
-
-
+"""
 async def get_list(db: AsyncSession, model):
-    """Retrieve a list of elements from database"""
+    # Retrieve a list of elements from database.
     result = await db.execute(select(model))
     item_list = result.unique().scalars().all()
     return item_list
+"""
 
 
 async def get_delivery_list(db: AsyncSession, user_id):
@@ -96,4 +88,24 @@ async def get_delivery_list(db: AsyncSession, user_id):
     except Exception as e:
         # Puedes manejar la excepción de la forma que consideres adecuada
         raise_and_log_error(logger, status.HTTP_403_FORBIDDEN, f"Error al conseguir la lista de deliveries.")
-        return []  # Devuelve una lista vacía en caso de error
+        return []  # In case of error, return an empty list
+
+
+async def get_delivery_by_id_without_checking(db: AsyncSession, delivery_id):
+    # Retrieve a delivery by id without checking the user permissions.
+    delivery = await db.get(models.Delivery, delivery_id)
+    return delivery
+
+
+async def update_delivery(db: AsyncSession, delivery):
+    db_delivery = get_delivery_by_id_without_checking(db, delivery.delivery_id)
+    # If there is no delivery created with that id
+    if db_delivery is None:
+        logger.debug("There is no delivery with that id.")
+    else:
+        db_delivery.status = delivery.status
+        db_delivery.delivery_id = delivery.delivery_id
+        db_delivery.location = delivery.location
+        await db.commit()
+        await db.refresh(db_delivery)
+        logger.debug("delivery updated")

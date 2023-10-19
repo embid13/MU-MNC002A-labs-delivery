@@ -13,3 +13,19 @@ services:
       LOG_CONFIG_FILENAME: ${LOG_CONFIG_FILENAME}
     restart: on-failure
 
+  rabbitmq:
+    image: "rabbitmq:management"
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=password
+      - RABBITMQ_CONFIG_FILE=$RABBITMQ_HOME/etc/rabbitmq/rabbitmq.conf
+    ports:
+      - "5671:5671"
+      - "15671:15671"
+    volumes:
+      #certs volume and configuration
+      - ./certs:/etc/rabbitmq/ssl/certs
+      - ./rabbitmqconfig.conf:/etc/rabbitmq/rabbitmq.conf
+    command: rabbitmq-server
+    restart: on-failure
+

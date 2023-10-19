@@ -1,0 +1,24 @@
+version: '3.1'
+services:
+  rabbitmq:
+    image: rabbitmq:3.8-management-alpine
+    ports:
+      - "15671:15671"
+      - "5671:5671"
+    environment:
+      RABBITMQ_DEFAULT_USER: "user"
+      RABBITMQ_DEFAULT_PASS: "password"
+      RABBITMQ_DEFAULT_VHOST: "/"
+      RABBITMQ_SSL_VERIFY: verify_none
+      RABBITMQ_SSL_CACERTFILE: /etc/rabbitmq/ssl/certs/ca.pem
+      RABBITMQ_SSL_CERTFILE: /etc/rabbitmq/ssl/certs/service-cert.pem
+      RABBITMQ_SSL_KEYFILE: /etc/rabbitmq/ssl/certs/service-key.pem
+      RABBITMQ_SSL_FAIL_IF_NO_PEER_CERT: false
+    volumes:
+      #certs volume and configuration
+      - ./certs/delivery/ca.pem:/etc/rabbitmq/ssl/certs/ca.pem
+      - ./certs/delivery/service-cert.pem:/etc/rabbitmq/ssl/certs/service-cert.pem
+      - ./certs/delivery/service-key.pem:/etc/rabbitmq/ssl/certs/service-key.pem
+    command: rabbitmq-server
+    restart: on-failure
+

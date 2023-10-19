@@ -1,12 +1,10 @@
-"""FastAPI router definitions."""
 import logging
-import requests
 from fastapi import APIRouter, Depends, status, Request
-from app.sql import crud, schemas
+from delivery_app.delivery.app.sql import crud, schemas
 from .delivery_router_utils import raise_and_log_error
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from app.dependencies import get_db
+from delivery_app.delivery.app.dependencies import get_db
 from keys import RSAKeys
 
 
@@ -14,7 +12,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-#TODO
 @router.get(
     "/delivery/{delivery_id}",
     summary="Deliver the delivery with delivery_id only if you have permission.",
@@ -30,13 +27,16 @@ router = APIRouter()
     tags=['Delivery']
 )
 async def deliver_single_delivery(
+        request: Request,
         delivery_id: int,
         db: AsyncSession = Depends(get_db)
 ):
     """Retrieve single order by id"""
     logger.debug("GET '/delivery/%i' endpoint called.", delivery_id)
     try:
-        delivery = await crud.deliver_delivery_by_id(db, delivery_id)
+        token = get_jwt_from_request(request)
+        user_id = RSAKeys.verify_jwt_and_get_id_from_token(token)
+        delivery = await crud.deliver_delivery_by_id(db, delivery_id, user_id)
         if not delivery:
             raise_and_log_error(logger, status.HTTP_404_NOT_FOUND, f"Delivery {delivery_id} not found")
         return delivery

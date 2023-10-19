@@ -1,14 +1,8 @@
-import asyncio
 import os
 import aio_pika
-import ssl
 
 
 async def create_connection():
-    ssl_options = {
-        "certfile": "/ruta/al/certificado.crt",  # Ruta al certificado del servidor
-        "keyfile": "/ruta/a/la/clave/privada.key"  # Ruta a la clave privada del servidor
-    }
     # Crear una conexión a RabbitMQ con SSL
     connection = await aio_pika.connect_robust(
         host=os.environ.get("RABBITMQ_IP"),
@@ -16,10 +10,8 @@ async def create_connection():
         login=os.environ.get("RABBITMQ_USER"),
         password=os.environ.get("RABBITMQ_PASS"),
         ssl=True,  # Especificamos que queremos una conexión SSL
-        ssl_options=ssl_options
     )
     return connection
-
 
 
 async def create_channel(connection):
@@ -56,7 +48,7 @@ async def publish_msg(exchange_name, routing_key, message):
     await channel.close()
     await connection.close()
 
-
+"""
 async def publish_log(message):
     exchange = 'logger_exchange'
     routing_key = f"{message['microservice']}.{message['type']}"
@@ -77,3 +69,4 @@ async def publish_log(message):
     # Cerrar la conexión y el canal
     await channel.close()
     await connection.close()
+"""

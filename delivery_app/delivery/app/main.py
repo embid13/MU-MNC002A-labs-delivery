@@ -4,9 +4,9 @@ import logging
 import os
 import asyncio
 from fastapi import FastAPI
-from delivery_app.delivery.app.routers import main_router
-from delivery_app.delivery.app.sql import models, database
-from delivery_app.delivery.app.routers.delivery_consumer import AsyncConsumer
+from app.routers import main_router
+from app.sql import models, database
+from app.routers.delivery_consumer import AsyncConsumer
 from routers.keys import RSAKeys
 
 # Configure logging ################################################################################

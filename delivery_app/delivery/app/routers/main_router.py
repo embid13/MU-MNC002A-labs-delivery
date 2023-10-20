@@ -1,10 +1,10 @@
 import logging
 from fastapi import APIRouter, Depends, status, Request
-from delivery_app.delivery.app.sql import crud, schemas
+from app.sql import crud, schemas
 from .delivery_router_utils import raise_and_log_error
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from delivery_app.delivery.app.dependencies import get_db
+from app.dependencies import get_db
 from keys import RSAKeys
 
 

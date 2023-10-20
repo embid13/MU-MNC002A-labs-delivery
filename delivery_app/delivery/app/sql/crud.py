@@ -7,7 +7,7 @@ from . import models
 from sqlalchemy.future import select
 from ..routers.delivery_router_utils import raise_and_log_error
 from fastapi import status
-from delivery_app.delivery.app.routers.delivery_publisher import publish_msg
+from app.routers.delivery_publisher import publish_msg
 
 logger = logging.getLogger(__name__)
 

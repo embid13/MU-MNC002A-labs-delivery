@@ -4,8 +4,8 @@ import aio_pika
 import logging
 import os
 import jwt
-from delivery_app.delivery.app.sql.database import SessionLocal
-from delivery_app.delivery.app.sql import crud, schemas
+from app.sql.database import SessionLocal
+from app.sql import crud, schemas
 from .delivery_router_utils import raise_and_log_error
 from fastapi import status
 

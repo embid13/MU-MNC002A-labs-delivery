@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from app.routers import main_router
 from app.sql import models, database
 from app.routers.delivery_consumer import AsyncConsumer
-from routers.keys import RSAKeys
+from app.routers.keys import RSAKeys
 
 # Configure logging ################################################################################
 logger = logging.getLogger(__name__)
@@ -16,21 +16,21 @@ logger = logging.getLogger(__name__)
 APP_VERSION = os.getenv("APP_VERSION", "2.0.0")
 logger.info("Running app version %s", APP_VERSION)
 DESCRIPTION = """
-Monolithic manufacturing order application.
+Monolithic manufacturing order application - Delivery Microservice.
 """
 
 tag_metadata = [
 
     {
         "name": "Delivery",
-        "description": "Endpoints related to machines",
+        "description": "Endpoints related to deliveries.",
     },
 
 ]
 
 app = FastAPI(
     redoc_url=None,  # disable redoc documentation.
-    title="FastAPI - Microservices app",
+    title="FastAPI - Deliveries app",
     description=DESCRIPTION,
     version=APP_VERSION,
     servers=[
@@ -62,14 +62,13 @@ async def startup_event():
     async with database.engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.create_all)
 
-    from delivery_app.delivery.app import dependencies
     logger.info("Waiting for RabbitMQ")
     logger.debug("WAITING FOR RABBITMQ")
     consumer_tasks = [
         asyncio.create_task(rabbitmq_consumer.start_consuming()),
         asyncio.create_task(rabbitmq_consumer2.start_consuming())
     ]
-    await asyncio.gather(*consumer_tasks)
+    asyncio.gather(*consumer_tasks)
 
 
 # Main #############################################################################################

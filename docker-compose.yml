@@ -1,31 +1,37 @@
 version: '3.1'
 services:
-  monolithicapp:
+  delivery:
     build: delivery_app
     ports:
-      - '13000:80'
+      - '12000:80'
     volumes:
       - './delivery_app/delivery:/code'
       - './db_volume:/volume'
     environment:
       PYTHONUNBUFFERED: 1
-      SQLALCHEMY_DATABASE_URL: ${SQLALCHEMY_SQLITE_DATABASE_URI}
+      SQLALCHEMY_DATABASE_URL: ${DELIVERY_SQLALCHEMY_SQLITE_DATABASE_URI}
       LOG_CONFIG_FILENAME: ${LOG_CONFIG_FILENAME}
     restart: on-failure
 
   rabbitmq:
-    image: "rabbitmq:management"
-    environment:
-      - RABBITMQ_DEFAULT_USER=user
-      - RABBITMQ_DEFAULT_PASS=password
-      - RABBITMQ_CONFIG_FILE=$RABBITMQ_HOME/etc/rabbitmq/rabbitmq.conf
+    image: rabbitmq:3.8-management-alpine
     ports:
-      - "5671:5671"
       - "15671:15671"
+      - "5671:5671"
+    environment:
+      RABBITMQ_DEFAULT_USER: "user"
+      RABBITMQ_DEFAULT_PASS: "password"
+      RABBITMQ_DEFAULT_VHOST: "/"
+      RABBITMQ_SSL_VERIFY: verify_none
+      RABBITMQ_SSL_CACERTFILE: /etc/rabbitmq/ssl/certs/ca.pem
+      RABBITMQ_SSL_CERTFILE: /etc/rabbitmq/ssl/certs/service-cert.pem
+      RABBITMQ_SSL_KEYFILE: /etc/rabbitmq/ssl/certs/service-key.pem
+      RABBITMQ_SSL_FAIL_IF_NO_PEER_CERT: false
     volumes:
       #certs volume and configuration
-      - ./certs:/etc/rabbitmq/ssl/certs
-      - ./rabbitmqconfig.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./certs/delivery/ca.pem:/etc/rabbitmq/ssl/certs/ca.pem
+      - ./certs/delivery/service-cert.pem:/etc/rabbitmq/ssl/certs/service-cert.pem
+      - ./certs/delivery/service-key.pem:/etc/rabbitmq/ssl/certs/service-key.pem
     command: rabbitmq-server
     restart: on-failure
 

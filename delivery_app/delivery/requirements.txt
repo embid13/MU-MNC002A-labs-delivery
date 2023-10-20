@@ -5,4 +5,10 @@ pydantic==1.9.1
 SQLAlchemy==1.4.39
 aiosqlite==0.17.0
 coloredlogs==15.0.1
+aiosqlite==0.17.0
+coloredlogs==15.0.1
 PyYAML==6.0
+aio-pika==9.3.0
+requests==2.31.0
+asyncio
+PyJWT

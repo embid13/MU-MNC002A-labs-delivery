@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/delivery/{delivery_id}",
+    "/delivery/deliver/{delivery_id}",
     summary="Deliver the delivery with delivery_id only if you have permission.",
     responses={
         status.HTTP_200_OK: {
@@ -32,7 +32,7 @@ async def deliver_single_delivery(
         db: AsyncSession = Depends(get_db)
 ):
     """Retrieve single order by id"""
-    logger.debug("GET '/delivery/%i' endpoint called.", delivery_id)
+    logger.debug("GET '/delivery/deliver/%i' endpoint called.", delivery_id)
     try:
         token = get_jwt_from_request(request)
         keys = RSAKeys()
@@ -64,7 +64,7 @@ async def view_deliveries(request: Request, db: AsyncSession = Depends(get_db)):
 
 
 @router.get(
-    "/prueba",
+    "/delivery/prueba",
 )
 async def prueba():
     logger.debug("GET '/prueba' endpoint called.")

@@ -7,7 +7,6 @@ WORKDIR /code
 # enabling the cache for the next step too.
 ##
 COPY delivery/requirements.txt /code/requirements.txt
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 ##
 # The --no-cache-dir option tells pip to not save the downloaded packages locally,
 # as that is only if pip was going to be run again to install the same packages,

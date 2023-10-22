@@ -3,11 +3,13 @@ import asyncio
 import aio_pika
 import logging
 import os
+import requests
 import jwt
 from app.sql.database import SessionLocal
 from app.sql import crud, schemas
 from .delivery_router_utils import raise_and_log_error
 from fastapi import status
+from app.routers.keys import RSAKeys
 
 
 logger = logging.getLogger(__name__)
@@ -86,3 +88,19 @@ class AsyncConsumer:
         except Exception as exc:
             raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error {exc}")
         print("Successful operation.")
+
+    @staticmethod
+    async def ask_public_key(body, exchange):
+        logger.debug("GETTING PUBLIC KEY")
+        endpoint = "http://192.168.17.11/auth/public-key"
+
+        try:
+            response = requests.get(endpoint)
+
+            if response.status_code == 200:
+                x = response.json()["public_key"]
+                RSAKeys.public_key = x
+            else:
+                print(f"Error al obtener la clave pública. Código de respuesta: {response.status_code}")
+        except requests.exceptions.RequestException as e:
+            print(f"Error de solicitud: {e}")

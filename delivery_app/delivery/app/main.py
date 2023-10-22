@@ -52,6 +52,9 @@ rabbitmq_consumer = AsyncConsumer('event_exchange', 'order.created',
 rabbitmq_consumer2 = AsyncConsumer('event_exchange', 'order.ready',
                                    AsyncConsumer.on_delivery_ready)
 
+rabbitmq_consumer3 = AsyncConsumer('event_exchange', 'auth.publickey',
+                                   AsyncConsumer.ask_public_key)
+
 RSAKeys.get_public_key()
 
 

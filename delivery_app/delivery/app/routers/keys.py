@@ -32,11 +32,11 @@ class RSAKeys(object):
             # Decodificar el token JWT
             payload = jwt.decode(token_jwt, RSAKeys.public_key, algorithms=os.environ["JWT_ALGORITHM"])
 
-            # Comprobar si el campo "user_id" está presente en el token
-            if "user_id" in payload:
-                return payload["user_id"]
+            # Comprobar si el campo "sub" está presente en el token
+            if "sub" in payload:
+                return payload["sub"]
             else:
-                return None  # El campo "user_id" no está presente en el token
+                return None  # El campo "sub" no está presente en el token
         except Exception as e:
             return f"Error desconocido: {str(e)}"
 

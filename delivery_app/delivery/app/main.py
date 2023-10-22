@@ -46,7 +46,7 @@ app = FastAPI(
 
 app.include_router(main_router.router)
 
-rabbitmq_consumer = AsyncConsumer('event_exchange', 'order.created',
+rabbitmq_consumer = AsyncConsumer('event_exchange', 'order.create',
                                   AsyncConsumer.on_delivery_received)
 
 rabbitmq_consumer2 = AsyncConsumer('event_exchange', 'order.ready',

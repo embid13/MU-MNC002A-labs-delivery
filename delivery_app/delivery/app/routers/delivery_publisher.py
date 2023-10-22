@@ -47,26 +47,3 @@ async def publish_msg(exchange_name, routing_key, message):
     # Cerrar la conexión y el canal
     await channel.close()
     await connection.close()
-
-"""
-async def publish_log(message):
-    exchange = 'logger_exchange'
-    routing_key = f"{message['microservice']}.{message['type']}"
-
-    connection = await create_connection()
-    channel = await create_channel(connection)
-
-    # Declarar el intercambio si no existe
-    await declare_exchange(channel, exchange, 'topic')
-
-    # Publicar el mensaje
-    await channel.publish(
-        exchange=exchange,
-        routing_key=routing_key,
-        body=message['message'].encode()
-    )
-
-    # Cerrar la conexión y el canal
-    await channel.close()
-    await connection.close()
-"""

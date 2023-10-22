@@ -61,7 +61,7 @@ class AsyncConsumer:
         # Decode the JSON message
         content = json.loads(body.decode('utf-8'))
         delivery_schema = schemas.deliveryBase(delivery_id=content['order_id'], status=content['status'],
-                                               location=content['location'])
+                                               location=content['location'], user_id=content['user_id'])
         logger.debug("delivery_schema:")
         logger.debug(delivery_schema)
 

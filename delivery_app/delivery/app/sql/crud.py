@@ -58,7 +58,8 @@ async def add_new_delivery(db: AsyncSession, delivery):
     delivery_base = models.Delivery(
         delivery_id=delivery.user_id,
         status=delivery.status,
-        location=delivery.location
+        location=delivery.location,
+        user_id=delivery.user_id
     )
     db.add(delivery_base)
     await db.commit()

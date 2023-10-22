@@ -29,4 +29,6 @@ class Delivery(BaseModel):
     delivery_id = Column(Integer, primary_key=True)
     status = Column(Boolean, nullable=False)
     location = Column(String, nullable=False)
+    user_id = Column(Integer, nullable=False)
+
 

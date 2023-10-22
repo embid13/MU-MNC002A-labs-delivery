@@ -22,3 +22,7 @@ class deliveryBase(BaseModel):
         description="Ubicación de la delivery de un order, indica a dónde hay que entregar el pedido.",
         example="Goiru Kalea, 2, 20500 Arrasate, Gipuzkoa"
     )
+    user_id: int = Field(
+        description="Usuario del delivery",
+        example=1
+    )

@@ -15,7 +15,7 @@ class RSAKeys(object):
     @staticmethod
     def get_public_key():
         logger.debug("GETTING PUBLIC KEY")
-        endpoint = 'https://192.168.17.11/public-key'
+        endpoint = 'http://192.168.17.11/public-key'
         try:
             response = requests.get(endpoint)
             if response.status_code == 200:

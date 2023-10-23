@@ -46,7 +46,7 @@ async def deliver_single_delivery(
 
 
 @router.get(
-    "/delivery",
+    "/delivery/deliveries",
     summary="Retrieve all YOUR deliveries by id",
     response_model=List[schemas.deliveryBase],
     tags=['Delivery', 'List']

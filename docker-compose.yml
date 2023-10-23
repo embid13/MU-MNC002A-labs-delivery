@@ -12,9 +12,15 @@ services:
       SQLALCHEMY_DATABASE_URL: ${DELIVERY_SQLALCHEMY_SQLITE_DATABASE_URI}
       LOG_CONFIG_FILENAME: ${LOG_CONFIG_FILENAME}
     restart: on-failure
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
 
   rabbitmq:
-    image: rabbitmq:3.8-management-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "15671:15671"
       - "5671:5671"
@@ -34,4 +40,9 @@ services:
       - ./certs/delivery/service-key.pem:/etc/rabbitmq/ssl/certs/service-key.pem
     command: rabbitmq-server
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "--insecure", "https://localhost:15671/"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 

@@ -35,8 +35,6 @@ class AsyncConsumer:
             "amqp://guest:guest@192.168.17.46/",
             port=5671,
             ssl=True,
-            login=os.environ.get("RABBITMQ_USER"),
-            password=os.environ.get("RABBITMQ_PASS"),
             loop=asyncio.get_event_loop()
         )
 

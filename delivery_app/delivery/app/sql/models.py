@@ -27,7 +27,7 @@ class BaseModel(Base):
 class Delivery(BaseModel):
     __tablename__ = "delivery"
     delivery_id = Column(Integer, primary_key=True)
-    status = Column(Boolean, nullable=False)
+    status = Column(String, nullable=False)
     location = Column(String, nullable=False)
     user_id = Column(Integer, nullable=False)
 

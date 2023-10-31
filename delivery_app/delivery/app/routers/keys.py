@@ -30,7 +30,7 @@ class RSAKeys(object):
     def get_id_from_token(token_jwt):
         try:
             # Decodificar el token JWT
-            payload = jwt.decode(token_jwt, RSAKeys.public_key, algorithms=os.environ["JWT_ALGORITHM"])
+            payload = jwt.decode(token_jwt, RSAKeys.public_key, algorithms='RS256')
 
             # Comprobar si el campo "sub" está presente en el token
             if "sub" in payload:
@@ -43,7 +43,7 @@ class RSAKeys(object):
     @staticmethod
     def verify_jwt_and_get_id_from_token(token):
         try:
-            payload = jwt.decode(token, RSAKeys.public_key, algorithms=os.environ["JWT_ALGORITHM"])
+            payload = jwt.decode(token, RSAKeys.public_key, algorithms='RS256')
             if payload['exp'] < datetime.timestamp(datetime.utcnow()):
                 raise_and_log_error(logger, status.HTTP_403_FORBIDDEN, "JWT Token expired")
             user_id = RSAKeys.get_id_from_token(token)

@@ -1,5 +1,6 @@
 import logging
 from fastapi import APIRouter, Depends, status, Request
+from fastapi.responses import JSONResponse
 from app.sql import crud, schemas
 from .delivery_router_utils import raise_and_log_error
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -58,7 +59,16 @@ async def view_deliveries(request: Request, db: AsyncSession = Depends(get_db)):
         keys = RSAKeys()
         user_id = keys.verify_jwt_and_get_id_from_token(token)
         delivery_list = await crud.get_delivery_list(db, user_id)
-        return delivery_list
+        deliveries_as_dict = [
+            {
+                "delivery_id": item.delivery_id,
+                "status": item.status,
+                "location": item.location,
+                "user_id": item.user_id
+            }
+            for item in delivery_list
+        ]
+        return JSONResponse(deliveries_as_dict)
     except Exception as exc:
         raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error getting the deliveries: {exc}")
 

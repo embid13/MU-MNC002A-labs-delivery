@@ -56,7 +56,7 @@ async def get_delivery_by_id(db: AsyncSession, delivery_id, user_id):
 async def add_new_delivery(db: AsyncSession, delivery):
     """Adds a new delivery to the database"""
     delivery_base = models.Delivery(
-        delivery_id=delivery.user_id,
+        delivery_id=delivery.delivery_id,
         status=delivery.status,
         location=delivery.location,
         user_id=delivery.user_id

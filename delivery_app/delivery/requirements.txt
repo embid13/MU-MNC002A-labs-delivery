@@ -12,3 +12,4 @@ aio-pika==9.3.0
 requests==2.31.0
 asyncio
 PyJWT
+pyjwt[crypto]

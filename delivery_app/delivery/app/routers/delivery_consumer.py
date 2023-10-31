@@ -77,10 +77,7 @@ class AsyncConsumer:
 
         # Decode the JSON message
         content = json.loads(body.decode('utf-8'))
-        delivery_schema = schemas.deliveryBase(delivery_id=content['order_id'], status=content['status'])
-        logger.debug("delivery_schema:")
-        logger.debug(delivery_schema)
-
+        delivery_schema = schemas.deliveryReady(delivery_id=content['order_id'], status=content['status'])
         try:
             await crud.update_delivery(db, delivery_schema)
         except Exception as exc:

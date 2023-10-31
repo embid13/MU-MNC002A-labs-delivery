@@ -99,14 +99,12 @@ async def get_delivery_by_id_without_checking(db: AsyncSession, delivery_id):
 
 
 async def update_delivery(db: AsyncSession, delivery):
-    db_delivery = get_delivery_by_id_without_checking(db, delivery.delivery_id)
+    db_delivery = await get_delivery_by_id_without_checking(db, delivery.delivery_id)
     # If there is no delivery created with that id
     if db_delivery is None:
         logger.debug("There is no delivery with that id.")
     else:
         db_delivery.status = delivery.status
-        db_delivery.delivery_id = delivery.delivery_id
-        db_delivery.location = delivery.location
         await db.commit()
         await db.refresh(db_delivery)
         logger.debug("delivery updated")

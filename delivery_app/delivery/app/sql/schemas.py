@@ -26,3 +26,13 @@ class deliveryBase(BaseModel):
         description="Usuario del delivery",
         example=1
     )
+    
+class deliveryReady(BaseModel):
+    delivery_id: int = Field(
+        description="Identificador de la delivery",
+        example=1
+    )
+    status: str = Field(
+        description="Estado de la entrega.",
+        example="Iniciado, Finalizado."
+    )

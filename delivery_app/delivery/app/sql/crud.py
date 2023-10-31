@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 async def deliver_delivery_by_id(db: AsyncSession, delivery_id, user_id):
     """Deliver a delivery by id"""
     content = {}
-    db_delivery = get_delivery_by_id(db, delivery_id, user_id)
+    db_delivery = await get_delivery_by_id(db, delivery_id, user_id)
     """If there is no delivery created with that id"""
     if db_delivery is None:
         logger.debug("delivery does not exist.")

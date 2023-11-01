@@ -27,11 +27,13 @@ async def deliver_delivery_by_id(db: AsyncSession, delivery_id, user_id):
         # Publish the new status
         content['delivery_id'] = delivery_id
         content['status'] = "DELIVERED"
-        logger.debug(content)
-        await publish_msg('event_exchange', 'delivery.delivered', json.dumps(content))
+        # Convert the content to JSON
+        json_content = json.dumps(content)
+        await publish_msg('delivery.delivered', json_content)
         logger.debug("delivery delivered")
     else:
         logger.debug("delivery is not ready!")
+        return "delivery not ready yet"
     return db_delivery
 
 

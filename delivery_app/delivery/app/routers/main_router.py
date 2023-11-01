@@ -33,14 +33,12 @@ async def deliver_single_delivery(
         db: AsyncSession = Depends(get_db)
 ):
     """Retrieve single order by id"""
-    logger.debug("PUT '/delivery/deliver/%i' endpoint called.", delivery_id)
+    logger.info("PUT '/delivery/deliver/%i' endpoint called.", delivery_id)
     try:
         token = get_jwt_from_request(request)
         keys = RSAKeys()
         user_id = keys.verify_jwt_and_get_id_from_token(token)
-        logger.info("tokens verified")
         delivery = await crud.deliver_delivery_by_id(db, delivery_id, user_id)
-        logger.info("delivery updated")
         if not delivery:
             raise_and_log_error(logger, status.HTTP_404_NOT_FOUND, f"Delivery {delivery_id} not found")
         if delivery.status == "DELIVERED":
@@ -53,7 +51,6 @@ async def deliver_single_delivery(
             return JSONResponse(delivery_as_dict)
         else:
             print("Delivery not ready yet.")
-
     except Exception as exc:
         raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error getting the delivery: {exc}")
 

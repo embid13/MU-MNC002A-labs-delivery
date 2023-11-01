@@ -1,49 +1,33 @@
-import os
 import aio_pika
+import logging
+import asyncio
 
 
-async def create_connection():
-    # Crear una conexión a RabbitMQ con SSL
+logger = logging.getLogger(__name__)
+
+
+async def publish_msg(routing_key, message):
+
+    logger.debug("enter publish_msg")
+
     connection = await aio_pika.connect_robust(
-        host=os.environ.get("RABBITMQ_IP"),
-        port=5671,  # El puerto para SSL suele ser 5671
-        login=os.environ.get("RABBITMQ_USER"),
-        password=os.environ.get("RABBITMQ_PASS"),
-        ssl=True,  # Especificamos que queremos una conexión SSL
-    )
-    return connection
-
-
-async def create_channel(connection):
-    # Crear un canal en la conexión
-    channel = await connection.channel()
-    return channel
-
-
-async def declare_exchange(channel, exchange_name, exchange_type):
-    # Declarar un intercambio en el canal
-    await channel.exchange_declare(
-        exchange=exchange_name,
-        exchange_type=exchange_type
+        "amqp://guest:guest@192.168.17.46/",
+        port=5671,
+        loop=asyncio.get_event_loop(),
+        ssl=True
     )
 
+    async with connection:
+        channel = await connection.channel()
+        await channel.set_qos(prefetch_count=1)  # Recibir un mensaje a la vez
+        exchange = await channel.declare_exchange("event_exchange", type=aio_pika.ExchangeType.TOPIC)
 
-async def publish_msg(exchange_name, routing_key, message):
-    connection = await create_connection()
-    channel = await create_channel(connection)
+        try:
+            await exchange.publish(
+                aio_pika.Message(body=message.encode()),
+                routing_key=routing_key,
+            )
+        except Exception as e:
+            logger.debug(e)
 
-    # Declarar el intercambio si no existe
-    await declare_exchange(channel, exchange_name, 'topic')
-
-    # Publicar el mensaje
-    await channel.publish(
-        exchange=exchange_name,
-        routing_key=routing_key,
-        body=message.encode()
-    )
-
-    print(f"[x] Sent {routing_key}:{message}")
-
-    # Cerrar la conexión y el canal
-    await channel.close()
-    await connection.close()
+    logger.debug(f" [x] Sent delivery.delivered:{message}")

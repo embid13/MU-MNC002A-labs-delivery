@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, status, Request, HTTPException
 from fastapi.responses import JSONResponse
 from app.sql import crud, schemas
 from .delivery_router_utils import raise_and_log_error
@@ -82,11 +82,12 @@ async def view_deliveries(request: Request, db: AsyncSession = Depends(get_db)):
         raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error getting the deliveries: {exc}")
 
 
-@router.get(
-    "/delivery/prueba",
-)
-async def prueba():
-    logger.debug("GET '/prueba' endpoint called.")
+@router.get("/delivery/health", summary="Health check", response_model=str)
+@router.head("/delivery/health", summary="Health check")
+def health_check():
+    """Health check endpoint."""
+    if RSAKeys.get_public_key() is None:
+        raise HTTPException(status_code=503, detail="Detalle del error")
     return "OLE"
 
 

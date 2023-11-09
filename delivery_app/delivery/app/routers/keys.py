@@ -8,29 +8,24 @@ from fastapi import status
 
 logger = logging.getLogger(__name__)
 
+public_key = None
 
 class RSAKeys(object):
-    public_key = None
-
+    
     @staticmethod
     def get_public_key():
-        logger.debug("GETTING PUBLIC KEY")
-        endpoint = 'http://192.168.17.11/auth/public-key'
-        try:
-            response = requests.get(endpoint)
-            if response.status_code == 200:
-                x = response.json()["public_key"]
-                RSAKeys.public_key = x
-            else:
-                print(f"Error al obtener la clave pública. Código de respuesta: {response.status_code}")
-        except requests.exceptions.RequestException as e:
-            print(f"Error de solicitud: {e}")
+        return public_key
+
+    @staticmethod
+    def set_public_key(new_public_key):
+        global public_key
+        public_key = new_public_key
 
     @staticmethod
     def get_id_from_token(token_jwt):
         try:
             # Decodificar el token JWT
-            payload = jwt.decode(token_jwt, RSAKeys.public_key, algorithms='RS256')
+            payload = jwt.decode(token_jwt, public_key, algorithms='RS256')
 
             # Comprobar si el campo "sub" está presente en el token
             if "sub" in payload:
@@ -43,7 +38,7 @@ class RSAKeys(object):
     @staticmethod
     def verify_jwt_and_get_id_from_token(token):
         try:
-            payload = jwt.decode(token, RSAKeys.public_key, algorithms='RS256')
+            payload = jwt.decode(token, public_key, algorithms='RS256')
             if payload['exp'] < datetime.timestamp(datetime.utcnow()):
                 raise_and_log_error(logger, status.HTTP_403_FORBIDDEN, "JWT Token expired")
             user_id = RSAKeys.get_id_from_token(token)

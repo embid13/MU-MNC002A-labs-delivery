@@ -55,7 +55,7 @@ rabbitmq_consumer2 = AsyncConsumer('event_exchange', 'order.ready',
 rabbitmq_consumer3 = AsyncConsumer('event_exchange', 'auth.publickey',
                                    AsyncConsumer.ask_public_key)
 
-RSAKeys.get_public_key()
+
 
 
 @app.on_event("startup")
@@ -64,6 +64,8 @@ async def startup_event():
     logger.info("Creating database tables")
     async with database.engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.create_all)
+
+    RSAKeys.get_public_key()
 
     logger.info("Waiting for RabbitMQ")
     logger.debug("WAITING FOR RABBITMQ")

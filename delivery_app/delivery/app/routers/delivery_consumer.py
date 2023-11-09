@@ -14,14 +14,6 @@ from app.routers.keys import RSAKeys
 
 logger = logging.getLogger(__name__)
 
-"""
-    El cliente manda usuario y contraseña a AUTH, AUTH le responde con un JWT firmado. 
-    AUTH mandará el public key a todos los microservicios.
-    En cada solicitud, Delivery va a recibir un JWT, NUNCA UN REFRESH TOKEN.
-    Comprobar si está caducado o no, en caso de estar caducado HTTP 401 (No autorizado).
-    Comprobar si tiene los permisos necesarios en cada caso, si no los tiene HTTP 403 (Prohibido.)
-"""
-
 
 class AsyncConsumer:
     def __init__(self, exchange_name, routing_key, callback_func):
@@ -94,7 +86,7 @@ class AsyncConsumer:
 
             if response.status_code == 200:
                 x = response.json()["public_key"]
-                RSAKeys.public_key = x
+                RSAKeys.set_public_key(x)
             else:
                 print(f"Error al obtener la clave pública. Código de respuesta: {response.status_code}")
         except requests.exceptions.RequestException as e:

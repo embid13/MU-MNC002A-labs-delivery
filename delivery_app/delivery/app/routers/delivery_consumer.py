@@ -4,14 +4,13 @@ import aio_pika
 import logging
 import os
 import requests
-import jwt
-import re
 from app.sql.database import SessionLocal
 from app.sql import crud, schemas
 from .delivery_router_utils import raise_and_log_error
 from fastapi import status
 from app.routers.keys import RSAKeys
 from app.routers.delivery_publisher import publish_msg
+from app.routers.log_publisher import publish_log_msg
 
 
 logger = logging.getLogger(__name__)
@@ -26,6 +25,8 @@ example:
     "user_id": 2,
     "postal_code": 20230
 }
+
+logs: si es error del cliente, WARNING, si es error de la app, ERROR.
 
 """
 
@@ -73,6 +74,7 @@ class AsyncConsumer:
             await crud.add_new_delivery(db, delivery_schema)
         except Exception as exc:
             raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error {exc}")
+            await publish_log_msg(exc, "ERROR", os.path.basename(__file__))
         print("Successful operation.")
 
 
@@ -89,6 +91,7 @@ class AsyncConsumer:
             await crud.update_delivery(db, delivery_schema)
         except Exception as exc:
             raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error {exc}")
+            await publish_log_msg(exc, "ERROR", os.path.basename(__file__))
         print("Successful operation.")
 
 
@@ -110,6 +113,7 @@ class AsyncConsumer:
             try:
                 await crud.add_new_delivery(db, delivery_schema)
             except Exception as exc:
+                await publish_log_msg(exc, "ERROR", os.path.basename(__file__))
                 raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error {exc}")
             await publish_msg('sagas_exchange', 'delivery.valid', "Correct postal code. ;-)")
             logger.info("Postal code successful")
@@ -128,6 +132,7 @@ class AsyncConsumer:
             await crud.update_delivery(db, delivery_schema)
         except Exception as exc:
             raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error {exc}")
+            await publish_log_msg(exc, "ERROR", os.path.basename(__file__))
         print("Successful operation.")
 
     @staticmethod
@@ -144,6 +149,7 @@ class AsyncConsumer:
             else:
                 print(f"Error al obtener la clave pública. Código de respuesta: {response.status_code}")
         except requests.exceptions.RequestException as e:
+            await publish_log_msg(e, "ERROR", os.path.basename(__file__))
             print(f"Error de solicitud: {e}")
 
 
@@ -154,8 +160,6 @@ def validate_postal_code(postal_code):
     postal_code_str = str(postal_code)  # Convert integer to string
 
     if postal_code_str[:2] in valid_prefixes and postal_code_str.isdigit() and len(postal_code_str) == 5:
-        logger.info("postal code validation true")
         return True
     else:
-        logger.info("postal code validation false")
         return False

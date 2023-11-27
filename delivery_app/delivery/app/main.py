@@ -8,6 +8,7 @@ from app.routers import main_router
 from app.sql import models, database
 from app.routers.delivery_consumer import AsyncConsumer
 from app.routers.keys import RSAKeys
+from app.business_logic.BLConsul import register_consul_service
 
 # Configure logging ################################################################################
 logger = logging.getLogger(__name__)
@@ -84,6 +85,7 @@ async def startup_event():
     ]
     asyncio.gather(*consumer_tasks)
 
+    register_consul_service()
 
 # Main #############################################################################################
 # If application is run as script, execute uvicorn on port 8000

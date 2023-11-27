@@ -46,13 +46,19 @@ app = FastAPI(
 
 app.include_router(main_router.router)
 
-rabbitmq_consumer = AsyncConsumer('event_exchange', 'order.create',
+rabbitmq_consumer = AsyncConsumer('sagas_command', 'delivery.reserve',
+                                  AsyncConsumer.reserve_delivery)
+
+rabbitmq_consumer1 = AsyncConsumer('sagas_command', 'delivery.release',
+                                   AsyncConsumer.release_delivery)
+
+rabbitmq_consumer2 = AsyncConsumer('event_exchange', 'order.created',
                                   AsyncConsumer.on_delivery_received)
 
-rabbitmq_consumer2 = AsyncConsumer('event_exchange', 'order.ready',
-                                   AsyncConsumer.on_delivery_ready)
+rabbitmq_consumer3 = AsyncConsumer('event_exchange', 'order.ready',
+                                   AsyncConsumer.update_delivery_status)
 
-rabbitmq_consumer3 = AsyncConsumer('event_exchange', 'auth.publickey',
+rabbitmq_consumer4 = AsyncConsumer('event_exchange', 'auth.publickey',
                                    AsyncConsumer.ask_public_key)
 
 
@@ -71,8 +77,10 @@ async def startup_event():
     logger.debug("WAITING FOR RABBITMQ")
     consumer_tasks = [
         asyncio.create_task(rabbitmq_consumer.start_consuming()),
+        asyncio.create_task(rabbitmq_consumer1.start_consuming()),
         asyncio.create_task(rabbitmq_consumer2.start_consuming()),
-        asyncio.create_task(rabbitmq_consumer3.start_consuming())
+        asyncio.create_task(rabbitmq_consumer3.start_consuming()),
+        asyncio.create_task(rabbitmq_consumer4.start_consuming())
     ]
     asyncio.gather(*consumer_tasks)
 

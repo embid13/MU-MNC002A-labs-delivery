@@ -29,7 +29,7 @@ async def deliver_delivery_by_id(db: AsyncSession, delivery_id, user_id):
         content['status'] = "DELIVERED"
         # Convert the content to JSON
         json_content = json.dumps(content)
-        await publish_msg('delivery.delivered', json_content)
+        await publish_msg("event_exchange",'delivery.delivered', json_content)
         logger.debug("delivery delivered")
     else:
         logger.debug("delivery is not ready!")
@@ -61,13 +61,15 @@ async def add_new_delivery(db: AsyncSession, delivery):
         delivery_id=delivery.delivery_id,
         status=delivery.status,
         location=delivery.location,
-        user_id=delivery.user_id
+        user_id=delivery.user_id,
+        postal_code=delivery.postal_code
     )
     db.add(delivery_base)
     await db.commit()
     await db.refresh(delivery_base)
     logger.debug("New delivery created")
     return delivery_base
+
 
 """
 async def get_list(db: AsyncSession, model):
@@ -104,9 +106,9 @@ async def update_delivery(db: AsyncSession, delivery):
     db_delivery = await get_delivery_by_id_without_checking(db, delivery.delivery_id)
     # If there is no delivery created with that id
     if db_delivery is None:
-        logger.debug("There is no delivery with that id.")
+        logger.info("There is no delivery with that id.")
     else:
         db_delivery.status = delivery.status
         await db.commit()
         await db.refresh(db_delivery)
-        logger.debug("delivery updated")
+        logger.info("delivery updated")

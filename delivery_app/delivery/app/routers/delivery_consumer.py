@@ -5,15 +5,29 @@ import logging
 import os
 import requests
 import jwt
+import re
 from app.sql.database import SessionLocal
 from app.sql import crud, schemas
 from .delivery_router_utils import raise_and_log_error
 from fastapi import status
 from app.routers.keys import RSAKeys
+from app.routers.delivery_publisher import publish_msg
 
 
 logger = logging.getLogger(__name__)
 
+
+"""
+example:
+{
+    "order_id": 2,
+    "status": "ASD",
+    "location": "asdasda 16",
+    "user_id": 2,
+    "postal_code": 20230
+}
+
+"""
 
 class AsyncConsumer:
     def __init__(self, exchange_name, routing_key, callback_func):
@@ -43,7 +57,7 @@ class AsyncConsumer:
                         await self.callback_func(message.body, exchange)
 
     @staticmethod
-    async def on_delivery_received(body):
+    async def on_delivery_received(body, exchange):
         logger.debug("on_delivery_received called")
         logger.debug("Getting database SessionLocal")
         db = SessionLocal()
@@ -61,15 +75,55 @@ class AsyncConsumer:
             raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error {exc}")
         print("Successful operation.")
 
+
     @staticmethod
-    async def on_delivery_ready(body):
+    async def update_delivery_status(body, exchange):
         logger.debug("on_delivery_ready called")
         logger.debug("Getting database SessionLocal")
         db = SessionLocal()
 
         # Decode the JSON message
         content = json.loads(body.decode('utf-8'))
-        delivery_schema = schemas.deliveryReady(delivery_id=content['order_id'], status=content['status'])
+        delivery_schema = schemas.deliveryUpdateStatus(delivery_id=content['order_id'], status=content['status'])
+        try:
+            await crud.update_delivery(db, delivery_schema)
+        except Exception as exc:
+            raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error {exc}")
+        print("Successful operation.")
+
+
+
+    @staticmethod
+    async def reserve_delivery(body, exchange):
+        logger.info("reserve_delivery called")
+
+        # Decode the JSON message
+        content = json.loads(body.decode('utf-8'))
+        logger.info(content)
+        if validate_postal_code(content['postal_code']):
+            delivery_schema = schemas.deliveryBase(delivery_id=content['order_id'], status="RESERVED",
+                                               location=content['location'], user_id=content['user_id'],
+                                                postal_code=content['postal_code'])
+            db = SessionLocal()
+            logger.info("SCHEMA:")
+            logger.info(delivery_schema)
+            try:
+                await crud.add_new_delivery(db, delivery_schema)
+            except Exception as exc:
+                raise_and_log_error(logger, status.HTTP_409_CONFLICT, f"Error {exc}")
+            await publish_msg('sagas_exchange', 'delivery.valid', "Correct postal code. ;-)")
+            logger.info("Postal code successful")
+        else:
+            logger.info("Bad postal code.")
+            await publish_msg('sagas_exchange', 'delivery.reject', "Wrong postal code.")
+
+    @staticmethod
+    async def release_delivery(body, exchange):
+        logger.info("release_delivery called")
+
+        content = json.loads(body.decode('utf-8'))
+        delivery_schema = schemas.deliveryUpdateStatus(delivery_id=content['order_id'], status="REJECTED")
+        db = SessionLocal()
         try:
             await crud.update_delivery(db, delivery_schema)
         except Exception as exc:
@@ -91,3 +145,17 @@ class AsyncConsumer:
                 print(f"Error al obtener la clave pública. Código de respuesta: {response.status_code}")
         except requests.exceptions.RequestException as e:
             print(f"Error de solicitud: {e}")
+
+
+def validate_postal_code(postal_code):
+    valid_prefixes = ['48', '01', '20']  # Códigos de Bizkaia (48), Álava (01) y Gipuzkoa (20).
+    logger.info("validate_postal_code called")
+
+    postal_code_str = str(postal_code)  # Convert integer to string
+
+    if postal_code_str[:2] in valid_prefixes and postal_code_str.isdigit() and len(postal_code_str) == 5:
+        logger.info("postal code validation true")
+        return True
+    else:
+        logger.info("postal code validation false")
+        return False

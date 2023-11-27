@@ -30,5 +30,6 @@ class Delivery(BaseModel):
     status = Column(String, nullable=False)
     location = Column(String, nullable=False)
     user_id = Column(Integer, nullable=False)
+    postal_code = Column(Integer, nullable=False)
 
 

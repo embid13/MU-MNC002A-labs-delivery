@@ -26,5 +26,6 @@ COPY delivery/app /code/app
 ##
 # Run application using uvicorn server
 ##
-ENTRYPOINT uvicorn --host 0.0.0.0 --port 80 --log-config ${LOG_CONFIG_FILENAME} app.main:app
+#ENTRYPOINT uvicorn --host 0.0.0.0 --port 80 --log-config ${LOG_CONFIG_FILENAME} app.main:app
+ENTRYPOINT uvicorn --host 0.0.0.0 --port 443 --log-config ${LOG_CONFIG_FILENAME} --ssl-keyfile /code/certs/fastapi.key --ssl-certfile /code/certs/fastapi.crt app.main:app
 

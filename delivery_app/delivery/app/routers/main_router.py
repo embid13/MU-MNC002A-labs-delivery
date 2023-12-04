@@ -1,4 +1,5 @@
 import logging
+import requests
 from fastapi import APIRouter, Depends, status, Request, HTTPException
 from fastapi.responses import JSONResponse
 from app.sql import crud, schemas
@@ -7,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from app.dependencies import get_db
 from app.routers.keys import RSAKeys
+from app.business_logic.BLConsul import get_consul_service
 
 
 logger = logging.getLogger(__name__)
@@ -89,6 +91,23 @@ def health_check():
     if RSAKeys.get_public_key() is None:
         raise HTTPException(status_code=503, detail="Detalle del error")
     return "OLE"
+
+
+def get_public_key():
+    logger.debug("GETTING PUBLIC KEY")
+    replicas_auth = get_consul_service("auth")
+    endpoint = f"https://{replicas_auth['Address']}/auth/public-key"
+
+    try:
+        response = requests.get(endpoint, verify=False)
+
+        if response.status_code == 200:
+            x = response.json()["public_key"]
+            RSAKeys.set_public_key(x)
+        else:
+            print(f"Error al obtener la clave pública. Código de respuesta: {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error de solicitud: {e}")
 
 
 def get_jwt_from_request(request):

@@ -11,7 +11,7 @@ class Config:
     CONSUL_HOST = "192.168.17.91"
     CONSUL_PORT = 8500
     CONSUL_DNS_PORT = 8600
-    PORT = int('80')
+    PORT = int('443')
     SERVICE_NAME = "delivery"
     SERVICE_ID = "deliveryr0"
     IP = None

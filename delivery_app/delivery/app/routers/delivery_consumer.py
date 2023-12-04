@@ -138,10 +138,10 @@ class AsyncConsumer:
     @staticmethod
     async def ask_public_key(body, exchange):
         logger.debug("GETTING PUBLIC KEY")
-        endpoint = "http://192.168.17.11/auth/public-key"
+        endpoint = "https://192.168.17.11/auth/public-key"
 
         try:
-            response = requests.get(endpoint)
+            response = requests.get(endpoint, verify=False)
 
             if response.status_code == 200:
                 x = response.json()["public_key"]

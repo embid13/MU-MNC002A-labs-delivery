@@ -29,12 +29,13 @@ def register_consul_service(cons=consul_instance, conf=config):
         port=conf.PORT,
         tags=["python", "microservice", "aas"],
         check={
-            "http": 'http://{host}:{port}/{service_name}/health'.format(
+            "http": 'https://{host}:{port}/{service_name}/health'.format(
                 host=conf.IP,
                 port=conf.PORT,
                 service_name=conf.SERVICE_NAME
             ),
-            "interval": '10s'
+            "interval": '10s',
+            "tls_skip_verify": True
         }
     )
     logger.info(f"Registered {conf.SERVICE_NAME} service ({conf.SERVICE_ID})")

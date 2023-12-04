@@ -9,6 +9,8 @@ from app.sql import models, database
 from app.routers.delivery_consumer import AsyncConsumer
 from app.routers.keys import RSAKeys
 from app.business_logic.BLConsul import register_consul_service
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 # Configure logging ################################################################################
 logger = logging.getLogger(__name__)
@@ -47,6 +49,15 @@ app = FastAPI(
 
 app.include_router(main_router.router)
 
+cert_path = "/app/certs/fastapi_cert.pem"
+key_path = "/app/certs/fastapi_key.pem"
+
+# Configuración de middleware para redireccionar HTTP a HTTPS
+app.add_middleware(HTTPSRedirectMiddleware)
+
+# Configuración de middleware para Trusted Host (opcional pero recomendado)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+
 rabbitmq_consumer = AsyncConsumer('sagas_command', 'delivery.reserve',
                                   AsyncConsumer.reserve_delivery)
 
@@ -72,7 +83,7 @@ async def startup_event():
     async with database.engine.begin() as conn:
         await conn.run_sync(models.Base.metadata.create_all)
 
-    RSAKeys.get_public_key()
+    main_router.get_public_key()
 
     logger.info("Waiting for RabbitMQ")
     logger.debug("WAITING FOR RABBITMQ")
@@ -97,6 +108,8 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=8000,
-        log_config='logging.yml'
+        log_config='logging.yml',
+        ssl_keyfile = key_path,
+        ssl_certfile = cert_path
     )
     logger.debug("App finished as script")
